@@ -60,24 +60,29 @@ function displayResults(apis) {
     }
 }
 
-async function fetchPolicyData(apiId, policyCell) {
-    try {
-        const response = await fetch(`/api/policy/${apiId}`);
-        const rateLimits = await response.json();
-
-        if (rateLimits) {
-            policyCell.textContent = ''; // Clear existing content
-            rateLimits.forEach(limit => {
-                const limitText = `Maximum Requests: ${limit.maximumRequests}, Time Period: ${limit.timePeriodInMilliseconds}ms`;
+function fetchPolicyData(apiId, policyCell) {
+    fetch(`/api/policy/${apiId}`)
+        .then(response => {
+            console.log(response);
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            
+            if (data.rateLimits) {
+                policyCell.textContent = ''; // Clear existing content
+                const limitText = `Maximum Requests: ${data.rateLimits.maximumRequests}, Time Period: ${data.rateLimits.timePeriodInMilliseconds}ms`;
                 const newLine = document.createElement('br');
                 policyCell.appendChild(document.createTextNode(limitText));
                 policyCell.appendChild(newLine);
-            });
-        } else {
-            policyCell.textContent = 'No rate limits found';
-        }
-    } catch (error) {
-        console.error('Error fetching policy:', error);
-        policyCell.textContent = 'Error fetching policy';
-    }
+            } else {
+                policyCell.textContent = 'No rate limits found';
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching policy:', error);
+            policyCell.textContent = 'Error fetching policy';
+        });
 }

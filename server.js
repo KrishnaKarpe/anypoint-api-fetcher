@@ -12,27 +12,35 @@ app.use(express.json());
 
 app.get('/api/policy/:apiId', async (req, res) => {
     const apiId = req.params.apiId;
-    const { accessToken } = req.body;
+    const accessToken = process.env.KK;
     const organizationId = process.env.ORGANIZATION_ID;
     const environmentId = process.env.ENVIRONMENT_ID;
 
     try {
-        const response = await axios.get(`https://anypoint.mulesoft.com/apimanager/api/v1/organizations/${organizationId}/environments/${environmentId}/apis/${apiId}/policies`, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`
-                // Add any necessary authentication headers
+        const response = await axios.get(
+            `https://anypoint.mulesoft.com/apimanager/api/v1/organizations/${organizationId}/environments/${environmentId}/apis/${apiId}/policies`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${accessToken}`
+                }
             }
-        });
-
-        // Find the policy with policyId 43 and extract rateLimits
-        const rateLimits = response.data.policies.find(policy => policy.policyTemplateId === 348741)?.configuration?.rateLimits;
-
-        res.json(rateLimits); // Send only the rateLimits data
+        );
+        // console.log(response.data);
+        const rateLimits1 = response.data.policies.find(policy => policy.policyTemplateId === '348741');
+        // console.log(rateLimits1.configuration.rateLimits);
+        if (rateLimits1 && rateLimits1.configuration && rateLimits1.configuration.rateLimits) {
+            const rateLimits = rateLimits1.configuration.rateLimits;
+            console.log(rateLimits);
+            res.json({ rateLimits: rateLimits });
+        } else {
+            res.status(404).json({ message: 'Policy not found or does not have rate limits' });
+        }
     } catch (error) {
         console.error('Error fetching policy:', error);
         res.status(500).send('Error fetching policy');
     }
 });
+
 
 app.post('/fetch-apis', async (req, res) => {
     const { accessToken } = req.body;
